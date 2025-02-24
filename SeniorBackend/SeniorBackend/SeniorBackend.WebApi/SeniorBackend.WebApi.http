@@ -1,0 +1,6 @@
+@SeniorBackend.WebApi_HostAddress = http://localhost:5296
+
+GET {{SeniorBackend.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
