@@ -9,8 +9,7 @@ using System.Threading.Tasks;
 namespace SeniorBackend.Infrastructure.Context
 {
     public class ApplicationDbContext : DbContext
-    {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    {        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
           
         }
