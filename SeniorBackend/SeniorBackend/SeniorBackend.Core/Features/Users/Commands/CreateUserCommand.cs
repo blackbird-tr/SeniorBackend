@@ -15,8 +15,7 @@ namespace SeniorBackend.Core.Features.Users.Commands
         public string LastName { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public string CompanyNumber { get; set; }
+        public string PhoneNumber { get; set; } 
     }
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, string>
     {
@@ -36,8 +35,7 @@ namespace SeniorBackend.Core.Features.Users.Commands
                 LastName = request.LastName,
                 UserName = request.UserName,
                 Email = request.Email,
-                PhoneNumber = request.PhoneNumber,
-                CompanyNumber = request.CompanyNumber,
+                PhoneNumber = request.PhoneNumber, 
                 DateCreated = DateTime.UtcNow
             };
 
