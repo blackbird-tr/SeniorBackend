@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Identity;
 using SeniorBackend.Core;
 using SeniorBackend.Infrastructure;
+using SeniorBackend.Infrastructure.Models;
 using SeniorBackend.WebApi.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,9 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddApplicationLayer();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddApplicationLayer(); 
+builder.Services.AddEndpointsApiExplorer(); 
 builder.Services.AddSwaggerGen();
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddApiVersioningExtension();
@@ -28,5 +30,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
 
 app.Run();
