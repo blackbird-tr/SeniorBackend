@@ -13,13 +13,8 @@ using SeniorBackend.Core.Settings;
 using SeniorBackend.Infrastructure.Context;
 using SeniorBackend.Infrastructure.Models;
 using SeniorBackend.Infrastructure.Repositories;
-using SeniorBackend.Infrastructure.Services;
-using System.Reflection;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
+using SeniorBackend.Infrastructure.Services; 
+using System.Text; 
 
 namespace SeniorBackend.Infrastructure
 {
@@ -92,7 +87,7 @@ namespace SeniorBackend.Infrastructure
             services.AddIdentity<AppUser, IdentityRole>(options =>
             {
                 options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
-                options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
+                options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider; 
             }).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
             services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));

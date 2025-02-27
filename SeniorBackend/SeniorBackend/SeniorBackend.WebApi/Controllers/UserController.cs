@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SeniorBackend.Core.Entities;
 using SeniorBackend.Core.Features.Users.Commands;
 using SeniorBackend.Core.Features.Users.Queries;
@@ -9,6 +10,7 @@ namespace SeniorBackend.WebApi.Controllers
     public class UserController:BaseApiController
     {
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetUserById(string id)
         {
             var user = await Mediator.Send(new GetUserByIdQuery() { Id=id});

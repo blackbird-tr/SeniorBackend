@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SeniorBackend.Core.DTOs.Account;
 using SeniorBackend.Core.Interfaces;
+using System.Security.Claims;
 
 namespace SeniorBackend.WebApi.Controllers
 {
@@ -14,7 +15,7 @@ namespace SeniorBackend.WebApi.Controllers
         public AccountController(IAccountService accountService)
         {
             _accountService = accountService;
-
+            
 
         }
 
@@ -30,6 +31,27 @@ namespace SeniorBackend.WebApi.Controllers
         {
             return Ok(await _accountService.RegisterAsync(request));
         }
+
+        [HttpPost("Confirm-Email")]
+        [ProducesResponseType(typeof(ConfirmEmailResponse), 200)]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailRequest request)
+        {
+            return Ok(await _accountService.ConfirmEmailAsync(request.Email,request.Code));
+        }
+        [HttpPost("Resend-Confirm-Email-Code")]
+        [ProducesResponseType(typeof(ResendEmailConfirmCodeResponse), 200)]
+        public async Task<IActionResult> RegisterAsync(ResendEmailConfirmCodeRequest request)
+        {
+            return Ok(await _accountService.ResendConfirmEmailCodeAsync(request.Email));
+        }
+        [HttpPost("Reset-Password")]
+        [ProducesResponseType(typeof(ChangePasswordResponse), 200)]
+        public async Task<IActionResult> ChangePassword(ChangePasswordRequest request,string userID)
+        {
+            return Ok(await _accountService.ChangePassword(request,userID));
+        }
+
+
 
         private string GenerateIPAddress()
         {
