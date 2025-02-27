@@ -13,11 +13,11 @@ builder.Services.AddControllers();
 
 builder.Services.AddApplicationLayer(); 
 builder.Services.AddEndpointsApiExplorer(); 
-builder.Services.AddSwaggerGen();
+ 
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddApiVersioningExtension();
 var app = builder.Build();
-
+app.UseCors(options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -26,7 +26,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

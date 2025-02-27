@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace SeniorBackend.Core.DTOs.Account
 {
-    public class RegisterResponse
+    public class ForgotPasswordResponse
     {
-        public string UserId { get; set; }
-        public string UserName { get; set; }
         public string Message { get; set; }
     }
 }
