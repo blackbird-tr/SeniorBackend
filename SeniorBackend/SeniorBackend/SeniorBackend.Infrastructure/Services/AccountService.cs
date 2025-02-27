@@ -48,11 +48,19 @@ namespace SeniorBackend.Infrastructure.Services
 
         public async Task<AuthenticationResponse> AuthenticateAsync(AuthenticationRequest request, string ipAddress)
         {
+
            var user=await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
             {
                 throw new Exception($"Email No Accounts Registered with {request.Email}.");
             }
+
+            var emailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
+            if (!emailConfirmed)
+            {
+                throw new Exception($"Email Not confirmed {request.Email}.");
+            }
+
             var result = await _signInManager.PasswordSignInAsync(user.UserName, request.Password, false, false);
 
             if(!result.Succeeded) { throw new Exception($"Email Invalid Credentials for '{request.Email}'.");
@@ -82,7 +90,37 @@ namespace SeniorBackend.Infrastructure.Services
             return response;
         }
 
+        public async Task<ChangePasswordResponse> ChangePassword(ChangePasswordRequest model, string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) { throw new Exception("User not found"); }
+
+            var result = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+
+            if (!result.Succeeded) { throw new Exception("There occur an error "); }
+            return new ChangePasswordResponse(){
+                UserId = userId, Message = "Succesful"
+            };
+        }
+
+        public async Task<ConfirmEmailResponse> ConfirmEmailAsync(string email, string code)
+        {
+            var user=await _userManager.FindByEmailAsync(email);
+            if (user == null) { throw new Exception("user connot find"); }
+            var result =await _userManager.ConfirmEmailAsync(user, code);
+            if (!result.Succeeded)
+            {
+                throw new Exception("cannot approved");
+            }
+            return new ConfirmEmailResponse() { Message="succesful" , UserId = user.Id };
+        }
+
         public Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ForgotPasswordResponse> ForgotPassword(ForgotPasswordRequest model)
         {
             throw new NotImplementedException();
         }
@@ -128,13 +166,26 @@ namespace SeniorBackend.Infrastructure.Services
                 UserName = user.UserName,
                 PhoneNumber = user.PhoneNumber,
             };
-            await dbContext.Set<User>().AddAsync(newuser);  
+            await dbContext.Set<User>().AddAsync(newuser);
 
-            //TODO: Attach Email Service here and configure it via appsettings
-            // await _emailService.SendAsync(new Core.DTOs.Email.EmailRequest() { From = "csartarge@gmail.com", To = user.Email, Body = $"Your confirm code is - {code}", Subject = "Confirm Registration" });
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
+            return new RegisterResponse { UserId = newuser.Id, UserName = newuser.UserName,Message=code };
+        }
 
-            return new RegisterResponse { UserId = newuser.Id, UserName = newuser.UserName };
+        public async Task<ResendEmailConfirmCodeResponse> ResendConfirmEmailCodeAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) throw new Exception("user not found");
+            var isConfirmed=await _userManager.IsEmailConfirmedAsync(user);
+            if (isConfirmed) { throw new Exception("email already confirmed"); }
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            return new ResendEmailConfirmCodeResponse { Message=code};
+        }
+
+        public Task<ResetPasswordResponse> ResetPassword(ResetPasswordRequest model)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<ValidateRefreshTokenResponse> ValidateRefreshToken(string userId, string token)
