@@ -38,19 +38,55 @@ namespace SeniorBackend.WebApi.Controllers
         {
             return Ok(await _accountService.ConfirmEmailAsync(request.Email,request.Code));
         }
+
+
+
         [HttpPost("Resend-Confirm-Email-Code")]
         [ProducesResponseType(typeof(ResendEmailConfirmCodeResponse), 200)]
         public async Task<IActionResult> RegisterAsync(ResendEmailConfirmCodeRequest request)
         {
             return Ok(await _accountService.ResendConfirmEmailCodeAsync(request.Email));
         }
-        [HttpPost("Reset-Password")]
+
+
+        [HttpPost("Change-Password")]
         [ProducesResponseType(typeof(ChangePasswordResponse), 200)]
         public async Task<IActionResult> ChangePassword(ChangePasswordRequest request,string userID)
         {
             return Ok(await _accountService.ChangePassword(request,userID));
         }
+        [HttpPost("Reset-Password")]
+        [ProducesResponseType(typeof(ForgotPasswordResponse), 200)]
+        public async Task<IActionResult> ChangePassword(ForgotPasswordRequest request)
+        {
+            return Ok(await _accountService.ForgotPassword(request));
+        }
+        [HttpPost("Reset-Password-Code")]
+        [ProducesResponseType(typeof(ForgotPasswordResponse), 200)]
+        public async Task<IActionResult> ChangePassword(string email)
+        {
+            return Ok(await _accountService.GenerateForgotPasswordToken(email));
+        }
+        [HttpPost("Validation-Refresh-Token")] 
+        [ProducesResponseType(typeof(ValidateRefreshTokenResponse), 200)]
+        public async Task<IActionResult> ValidationRefreshToken(string userId, string RefreshToken)
+        {
 
+            return Ok(await _accountService.ValidateRefreshToken(userId, RefreshToken));
+        }
+
+        [HttpPost("RefreshToken")] 
+        [ProducesResponseType(typeof(ExchangeRefreshTokenResponse), 200)]
+        public async Task<ActionResult> RefreshToken([FromBody] RequestRefreshToken requestRefreshToken)
+        {
+            if (requestRefreshToken == null)
+            {
+
+                return new BadRequestResult();
+            }
+
+            return Ok(await _accountService.ExchangeRefreshToken(requestRefreshToken));
+        }
 
 
         private string GenerateIPAddress()

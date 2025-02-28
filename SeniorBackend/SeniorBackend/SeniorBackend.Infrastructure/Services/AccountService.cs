@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SeniorBackend.Core.DTOs.Account;
@@ -9,16 +10,10 @@ using SeniorBackend.Core.Settings;
 using SeniorBackend.Infrastructure.Context;
 using SeniorBackend.Infrastructure.Helpers;
 using SeniorBackend.Infrastructure.Models;
-using System;
-using System.Collections.Generic;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
-
 namespace SeniorBackend.Infrastructure.Services
 {
     public class AccountService : IAccountService
@@ -54,17 +49,17 @@ namespace SeniorBackend.Infrastructure.Services
             {
                 throw new Exception($"Email No Accounts Registered with {request.Email}.");
             }
-
+             
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, request.Password, false, false);
+                        
+            if (!result.Succeeded) { throw new Exception($"Email Invalid Credentials for '{request.Email}'.");
+            }
             var emailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
             if (!emailConfirmed)
             {
                 throw new Exception($"Email Not confirmed {request.Email}.");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, request.Password, false, false);
-
-            if(!result.Succeeded) { throw new Exception($"Email Invalid Credentials for '{request.Email}'.");
-            }
             JwtSecurityToken jwtSecurityToken = await GenerateJWToken(user);
             AuthenticationResponse response = new AuthenticationResponse();
             response.Id = user.Id;
@@ -115,14 +110,96 @@ namespace SeniorBackend.Infrastructure.Services
             return new ConfirmEmailResponse() { Message="succesful" , UserId = user.Id };
         }
 
-        public Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken)
+        public async Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken)
         {
-            throw new NotImplementedException();
+            ExchangeRefreshTokenResponse response;
+            try
+            {
+                //Getting user claims from token
+                ClaimsPrincipal claimsPrincipal = ValidateToken(requestRefreshToken.AccessToken, new TokenValidationParameters
+                {
+                    ValidateAudience = false,
+                    ValidateIssuer = false,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key)),
+                    ValidateLifetime = false // we check expired tokens here
+                });
+                // invalid token/signing key was passed and we can't extract user claims
+                if (claimsPrincipal == null)
+                    throw new Exception("TokenError");
+                //Getting user from repository
+
+                //var user = await _userManager.GetUserAsync(claimsPrincipal);
+                var myuserId = dbContext.RefreshTokens.Where(a => a.Token == requestRefreshToken.RefreshToken).Select(f => f.UserID).FirstOrDefault();
+                AppUser user = await _userManager.FindByIdAsync(myuserId);
+                //generating new access token
+                var jwtToken = await GenerateJWToken(user);
+                //generating new refresh token
+                var refreshToken = RandomTokenString();
+                // delete the refresh token that exchanged
+                var deleterefreshToken = dbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == requestRefreshToken.RefreshToken);
+
+                if (deleterefreshToken != null)
+                {
+                    dbContext.RefreshTokens.Remove(deleterefreshToken);
+                    dbContext.SaveChanges();
+                }
+
+
+                // add the new one
+                dbContext.RefreshTokens.Add(new RefreshToken
+                {
+                    Token = refreshToken,
+                    UserID = user.Id,
+                });
+                dbContext.SaveChanges();
+                await _genericRepositoryAsync.UpdateAsync(user);
+                response = new ExchangeRefreshTokenResponse { Message = refreshToken };
+
+            }
+            catch (Exception ex)
+            {
+                response = new ExchangeRefreshTokenResponse { Message = ex.Message };
+            }
+            return response;
+
+        }
+        public ClaimsPrincipal ValidateToken(string token, TokenValidationParameters tokenValidationParameters)
+        {
+            try
+            {
+                var principal = _jwtSecurityTokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+                if (!(securityToken is JwtSecurityToken jwtSecurityToken) || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                    throw new SecurityTokenException("Invalid token");
+
+                return principal;
+            }
+            catch (Exception ex)
+            {
+                var message = ex.Message;
+                return null;
+            }
         }
 
-        public Task<ForgotPasswordResponse> ForgotPassword(ForgotPasswordRequest model)
+        public async Task<ForgotPasswordResponse> ForgotPassword(ForgotPasswordRequest model)
         {
-            throw new NotImplementedException();
+            var user =await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) { throw new Exception("user not found"); }
+            
+            var response=await _userManager.ResetPasswordAsync(user,model.Token,model.NewPassword);
+            if (!response.Succeeded) { throw new Exception("occured an error"); }
+
+            return new ForgotPasswordResponse() { Message = "Succes" };
+        }
+
+        public async Task<ForgotPasswordResponse> GenerateForgotPasswordToken(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) { throw new Exception("user  cannot find"); }
+
+            var response=await _userManager.GeneratePasswordResetTokenAsync(user);
+            return new ForgotPasswordResponse() { Message = response };
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
@@ -183,16 +260,24 @@ namespace SeniorBackend.Infrastructure.Services
             return new ResendEmailConfirmCodeResponse { Message=code};
         }
 
-        public Task<ResetPasswordResponse> ResetPassword(ResetPasswordRequest model)
-        {
-            throw new NotImplementedException();
-        }
 
-        public Task<ValidateRefreshTokenResponse> ValidateRefreshToken(string userId, string token)
-        {
-            throw new NotImplementedException();
-        }
 
+
+        public async Task<ValidateRefreshTokenResponse> ValidateRefreshToken(string userId, string token)
+        { 
+            RefreshToken refreshToken = dbContext.RefreshTokens.Where(r => r.Token == token).FirstOrDefault();
+
+            if (refreshToken.UserID == userId && refreshToken.Token == token && refreshToken.IsActive)
+            {
+                return new ValidateRefreshTokenResponse { UserId = userId, Message = "Succeded" };
+            }
+            else
+            {
+                return new ValidateRefreshTokenResponse { UserId = userId, Message = "Refresh Token not Invalid" };
+            }
+
+            throw new InvalidOperationException();
+        }
 
 
 
