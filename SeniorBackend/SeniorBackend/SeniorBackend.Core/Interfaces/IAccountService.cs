@@ -14,11 +14,10 @@ namespace SeniorBackend.Core.Interfaces
 
         Task<ConfirmEmailResponse> ConfirmEmailAsync(string email, string code);
         Task<ResendEmailConfirmCodeResponse> ResendConfirmEmailCodeAsync(string email);
-        Task<ForgotPasswordResponse> ForgotPassword(ForgotPasswordRequest model);
-        Task<ResetPasswordResponse> ResetPassword(ResetPasswordRequest model);
+        Task<ForgotPasswordResponse> ForgotPassword(ForgotPasswordRequest model); 
         Task<ChangePasswordResponse> ChangePassword(ChangePasswordRequest model, string userId);
         Task<ValidateRefreshTokenResponse> ValidateRefreshToken(string userId, string token);
-
+        Task<ForgotPasswordResponse> GenerateForgotPasswordToken(string email);
         Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken);
     }
 }
