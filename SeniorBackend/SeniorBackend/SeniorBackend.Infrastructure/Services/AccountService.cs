@@ -244,6 +244,7 @@ namespace SeniorBackend.Infrastructure.Services
                 PhoneNumber = user.PhoneNumber,
             };
             await dbContext.Set<User>().AddAsync(newuser);
+            dbContext.SaveChanges();
 
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
