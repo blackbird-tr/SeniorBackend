@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SeniorBackend.Core.DTOs.User;
 using SeniorBackend.Core.Entities;
 using SeniorBackend.Core.Features.Users.Commands;
+using SeniorBackend.Core.Features.Users.Commands.UpdateUserCommand;
 using SeniorBackend.Core.Features.Users.Queries;
 
 namespace SeniorBackend.WebApi.Controllers
@@ -20,14 +22,22 @@ namespace SeniorBackend.WebApi.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserCommand command)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        [HttpPut("UpdateUser")]
+        [Authorize]
+        public async Task<IActionResult> GetUserById(UpdateUserRequest updatereq,string id)
+        { 
+            if (updatereq.Id != id) { return BadRequest(); }
 
-            var userId = await Mediator.Send(command);
-            return Ok(userId);
+            UpdateUserCommand command=new UpdateUserCommand();
+            command.Id = id;
+            command.PhoneNum = updatereq.PhoneNum;
+            command.Surname = updatereq.Surname;
+            command.Name= updatereq.Name;
+
+            
+
+            return Ok( await Mediator.Send(command));
         }
+
     }
 }
