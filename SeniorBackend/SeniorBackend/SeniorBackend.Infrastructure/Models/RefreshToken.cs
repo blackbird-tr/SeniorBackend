@@ -16,11 +16,11 @@ namespace SeniorBackend.Core.Entities
         public DateTime  Created { get; set; }
         public string CreatedByIp { get; set; }
         public DateTime? Revoked { get; set; }
-        public string RevokedByIp { get; set; }
-        public string ReplacedByToken { get; set; }
+        public string? RevokedByIp { get; set; }
+        public string? ReplacedByToken { get; set; }
         public bool IsActive => Revoked == null && !isExpired;
 
-        public string RemoteIpAdress { get; private set; }
+        public string? RemoteIpAdress { get; private set; }
         public string UserID { get; set; }
         public AppUser User { get; set; }
 
