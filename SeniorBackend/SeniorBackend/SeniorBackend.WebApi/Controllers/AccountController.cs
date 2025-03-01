@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SeniorBackend.Core.DTOs.Account;
 using SeniorBackend.Core.Interfaces;
+using SeniorBackend.Infrastructure.Helpers;
 using System.Security.Claims;
 
 namespace SeniorBackend.WebApi.Controllers
@@ -23,7 +24,7 @@ namespace SeniorBackend.WebApi.Controllers
         [ProducesResponseType(typeof(AuthenticationResponse), 200)]
         public async Task<IActionResult> AuthenticateAsync(AuthenticationRequest request)
         {
-            return Ok(await _accountService.AuthenticateAsync(request, GenerateIPAddress()));
+            return Ok(await _accountService.AuthenticateAsync(request, IpHelper.GetIpAddress()));
         }
         [HttpPost("register")] 
         [ProducesResponseType(typeof(RegisterResponse), 200)]
@@ -75,7 +76,7 @@ namespace SeniorBackend.WebApi.Controllers
             return Ok(await _accountService.ValidateRefreshToken(userId, RefreshToken));
         }
 
-        [HttpPost("RefreshToken")] 
+        [HttpPost("ExchangeRefreshToken")] 
         [ProducesResponseType(typeof(ExchangeRefreshTokenResponse), 200)]
         public async Task<ActionResult> RefreshToken([FromBody] RequestRefreshToken requestRefreshToken)
         {
@@ -85,18 +86,11 @@ namespace SeniorBackend.WebApi.Controllers
                 return new BadRequestResult();
             }
 
-            return Ok(await _accountService.ExchangeRefreshToken(requestRefreshToken));
+            return Ok(await _accountService.ExchangeRefreshToken(requestRefreshToken,IpHelper.GetIpAddress()));
         }
 
 
-        private string GenerateIPAddress()
-        {
-            if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                return Request.Headers["X-Forwarded-For"];
-            else
-                return HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-        }
-
+        
     }
 
 }
