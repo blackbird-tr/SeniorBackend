@@ -80,6 +80,7 @@ namespace SeniorBackend.Infrastructure.Services
                 RevokedByIp = refreshToken.RevokedByIp,
                 ReplacedByToken = refreshToken.ReplacedByToken,
                 UserID = user.Id,
+                
             });
             dbContext.SaveChanges();
             return response;
@@ -110,7 +111,7 @@ namespace SeniorBackend.Infrastructure.Services
             return new ConfirmEmailResponse() { Message="succesful" , UserId = user.Id };
         }
 
-        public async Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken)
+        public async Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken,string ipAdress)
         {
             ExchangeRefreshTokenResponse response;
             try
@@ -135,7 +136,7 @@ namespace SeniorBackend.Infrastructure.Services
                 //generating new access token
                 var jwtToken = await GenerateJWToken(user);
                 //generating new refresh token
-                var refreshToken = RandomTokenString();
+                var refreshToken = GenerateRefreshToken(ipAdress);
                 // delete the refresh token that exchanged
                 var deleterefreshToken = dbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == requestRefreshToken.RefreshToken);
 
@@ -144,17 +145,24 @@ namespace SeniorBackend.Infrastructure.Services
                     dbContext.RefreshTokens.Remove(deleterefreshToken);
                     dbContext.SaveChanges();
                 }
-
-
-                // add the new one
                 dbContext.RefreshTokens.Add(new RefreshToken
                 {
-                    Token = refreshToken,
+
+                    Token = refreshToken.Token,
+                    Expires = refreshToken.Expires,
+                    Created = refreshToken.Created,
+                    CreatedByIp = refreshToken.CreatedByIp,
+                    Revoked = refreshToken.Revoked,
+                    RevokedByIp = refreshToken.RevokedByIp,
+                    ReplacedByToken = refreshToken.ReplacedByToken,
                     UserID = user.Id,
+
                 });
+
+                
                 dbContext.SaveChanges();
                 await _genericRepositoryAsync.UpdateAsync(user);
-                response = new ExchangeRefreshTokenResponse { Message = refreshToken };
+                response = new ExchangeRefreshTokenResponse { Message = refreshToken.Token };
 
             }
             catch (Exception ex)
@@ -266,7 +274,7 @@ namespace SeniorBackend.Infrastructure.Services
 
         public async Task<ValidateRefreshTokenResponse> ValidateRefreshToken(string userId, string token)
         { 
-            RefreshToken refreshToken = dbContext.RefreshTokens.Where(r => r.Token == token).FirstOrDefault();
+            RefreshToken refreshToken = await dbContext.RefreshTokens.Where(r => r.Token == token).FirstOrDefaultAsync();
 
             if (refreshToken.UserID == userId && refreshToken.Token == token && refreshToken.IsActive)
             {
