@@ -18,6 +18,6 @@ namespace SeniorBackend.Core.Interfaces
         Task<ChangePasswordResponse> ChangePassword(ChangePasswordRequest model, string userId);
         Task<ValidateRefreshTokenResponse> ValidateRefreshToken(string userId, string token);
         Task<ForgotPasswordResponse> GenerateForgotPasswordToken(string email);
-        Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken);
+        Task<ExchangeRefreshTokenResponse> ExchangeRefreshToken(RequestRefreshToken requestRefreshToken, string ipAdress);
     }
 }
